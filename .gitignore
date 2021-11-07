@@ -1,0 +1,22 @@
+.DS_Store
+*.class
+*.jar
+*.war
+*.ear
+*.bat
+# generated files
+bin/**
+gen/**
+# project based files
+.idea/
+*.iml
+*.ipr
+*.iws
+.gradletasknamecache
+.gradle/
+!gradle-wrapper.jar
+build/
+bin/
+.env*
+
+docker-compose-local.yml

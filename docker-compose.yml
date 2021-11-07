@@ -1,0 +1,55 @@
+version: "3.7"
+
+services:
+  coachbot-stage:
+    image: ghcr.io/omarshaarawi/coach-bot:stage
+    container_name: coachbot-stage
+    environment:
+      - ENV=stage
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - CHAT_ID=${CHAT_ID}
+      - ESPN_SWID=${ESPN_SWID}
+      - ESPN_S2=${ESPN_S2}
+      - LEAGUE_ID=${LEAGUE_ID}
+    expose:
+      - 9001
+    ports:
+      - "9001:9001"
+    restart: unless-stopped
+
+  coachbot:
+    image: ghcr.io/omarshaarawi/coach-bot:master
+    container_name: coachbot
+    environment:
+      - ENV=prod
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - CHAT_ID=${CHAT_ID}
+      - ESPN_SWID=${ESPN_SWID}
+      - ESPN_S2=${ESPN_S2}
+      - LEAGUE_ID=${LEAGUE_ID}
+    expose:
+      - 9002
+    ports:
+      - "9002:9002"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: monitoring-backend
+    volumes:
+      - ./prometheus-config.yml:/etc/prometheus/prometheus.yml
+    command: "--config.file=/etc/prometheus/prometheus.yml"
+    expose:
+      - 9090
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitoring-frontend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - prometheus
