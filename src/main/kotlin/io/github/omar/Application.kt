@@ -76,7 +76,9 @@ fun main() {
         { telegramService.sendMessage(espnService.getProjectedScoreboard()) } to Pair("every wed 08:00",
             "Score Projections"),
         { telegramService.sendMessage(espnService.getWaiverReport()) } to Pair("every wed 08:00", "Waiver Report"),
-        { telegramService.sendMessage(espnService.getMonitor()) } to Pair("every sun 08:00", "Player Monitor")
+        { telegramService.sendMessage(espnService.getMonitor()) } to Pair("every sun 08:00", "Player Monitor"),
+        { telegramService.sendMessage(espnService.getMonitor()) } to Pair("every 1 mins", "test")
+
     )
 
 

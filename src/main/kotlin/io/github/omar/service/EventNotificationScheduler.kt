@@ -1,15 +1,22 @@
 package io.github.omar.service
 
 import com.github.shyiko.skedule.Schedule
+import io.github.omar.metrics.APP_METRICS_REGISTRY
+import io.github.omar.metrics.failedScheduledTask
+import io.github.omar.metrics.scheduledTaskQueue
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import mu.KotlinLogging
+
 
 class EventNotificationScheduler(private val timezone: String) {
 
-    private val executor = ScheduledThreadPoolExecutor(10)
+    private val executor = ScheduledThreadPoolExecutor(1)
+
+    var myGauge: AtomicInteger? = APP_METRICS_REGISTRY.gauge("numberGauge", AtomicInteger(0))
 
     init {
         executor.removeOnCancelPolicy = true
@@ -23,11 +30,13 @@ class EventNotificationScheduler(private val timezone: String) {
             executor.schedule({
                 LOGGER.info { "Trigger notification event" }
                 action.invoke()
+                scheduledTaskQueue(executor.queue.size)
                 scheduleNextExecution(action, stringSchedule)
             }, nextExecution.toEpochSecond() - now.toEpochSecond(), TimeUnit.SECONDS)
             LOGGER.info { "Schedule ${stringSchedule.second} notification for $nextExecution" }
         } catch (ex: Exception) {
             LOGGER.error(ex) { "Could not schedule next notification!" }
+            failedScheduledTask()
         }
     }
 

@@ -1,5 +1,6 @@
 package io.github.omar.plugins
 
+import io.github.omar.metrics.APP_METRICS_REGISTRY
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -14,15 +15,12 @@ import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.binder.system.UptimeMetrics
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
 
 fun Application.configureMonitoring() {
-    val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     install(MicrometerMetrics) {
 
-        registry = appMicrometerRegistry
+        registry = APP_METRICS_REGISTRY
         meterBinders = listOf(
             ClassLoaderMetrics(),
             JvmMemoryMetrics(),
@@ -36,7 +34,7 @@ fun Application.configureMonitoring() {
 
     routing {
         get("/metrics-micrometer") {
-            call.respond(appMicrometerRegistry.scrape())
+            call.respond(APP_METRICS_REGISTRY.scrape())
         }
     }
 }

@@ -4,6 +4,8 @@ import com.github.kotlintelegrambot.Bot
 import com.github.kotlintelegrambot.entities.ChatId
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.network.fold
+import io.github.omar.metrics.successfulMessage
+import io.github.omar.metrics.unsuccessfulMessage
 import io.github.omar.model.TelegramConfig
 import mu.KotlinLogging
 
@@ -17,9 +19,11 @@ class TelegramService(private val bot: Bot, private val telegramConfig: Telegram
             bot.sendMessage(chatId, parseMode = ParseMode.MARKDOWN_V2, text = newString)
 
         messageResponse.fold({
+            successfulMessage()
             LOGGER.info { "Message Sent Successfully" }
         }, {
             LOGGER.error { "Code: ${messageResponse.first?.code()} Body: ${it.errorBody?.string()}" }
+            unsuccessfulMessage()
             sendMessage("Message Failed To Send")
         })
     }
