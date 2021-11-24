@@ -228,7 +228,7 @@ class EspnService(espnConfig: ESPNConfig) {
             val homeTeam = i.homeTeam as Team
             val awayTeam = i.awayTeam as Team
             val diffScore = i.awayScore - i.homeScore
-            if ((-16 < diffScore && !allPlayed(i.awayLineup)) || 0 <= diffScore && diffScore < 16 && !allPlayed(i.homeLinup)) {
+            if ((-16 < diffScore && !allPlayed(i.awayLineup)) || (0 <= diffScore && diffScore < 16 && !allPlayed(i.homeLinup))) {
                 score.add("%s %.2f - %.2f %s".format(
                     homeTeam.teamAbbrev.replace("\"", ""),
                     i.homeScore,
@@ -437,7 +437,7 @@ ${list.slice(list.indices)}
     }
 
 
-    fun getSimplePoints(playerName: String): Double {
+    private fun getSimplePoints(playerName: String): Double {
         val boxScore = league.boxScore(week = 4)
         var message = 0.0
         var i = 0
@@ -510,7 +510,7 @@ $points
         }
 
         for (player in freeAgents) {
-            val main = teamRoster.minus(breakoutList)
+            val main = teamRoster.minus(breakoutList.toSet())
             if (player.name !in main && getSimplePoints(player.name) >= 20) {
                 message = """
                     **Breakout Alert**

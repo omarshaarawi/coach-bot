@@ -46,17 +46,15 @@ fun main() {
         token = telegramConfig.token
 
         dispatch {
-            command("whoHas") {
-                telegramService.sendMessage(espnService.whoHas(message.text!!.replace("/whoHas ",
+            command("whohas") {
+                telegramService.sendMessage(espnService.whoHas(message.text!!.replace("/whohas ",
                     "")))
             }
-            command("pwr") { telegramService.sendMessage(espnService.getPowerRankings()) }
+            command("power") { telegramService.sendMessage(espnService.getPowerRankings()) }
             command("matchups") { telegramService.sendMessage(espnService.getMatchups()) }
-            command("closeScore") { telegramService.sendMessage(espnService.getCloseScores()) }
+            command("closescore") { telegramService.sendMessage(espnService.getCloseScores()) }
             command("final") { telegramService.sendMessage(espnService.scoreboard(true)) }
-            command("scoreUpdateAM") { telegramService.sendMessage(espnService.scoreboard()) }
-            command("scoreUpdatePM") { telegramService.sendMessage(espnService.scoreboard()) }
-            command("scoreUpdatePM2") { telegramService.sendMessage(espnService.scoreboard()) }
+            command("scores") { telegramService.sendMessage(espnService.scoreboard()) }
             command("projections") { telegramService.sendMessage(espnService.getProjectedScoreboard()) }
             command("waiver") { telegramService.sendMessage(espnService.getWaiverReport()) }
             command("monitor") { telegramService.sendMessage(espnService.getMonitor()) }
@@ -70,9 +68,9 @@ fun main() {
         { telegramService.sendMessage(espnService.getMatchups()) } to Pair("every thu 18:30", "Matchups"),
         { telegramService.sendMessage(espnService.getCloseScores()) } to Pair("every mon 17:30", "Close Scores"),
         { telegramService.sendMessage(espnService.scoreboard(true)) } to Pair("every tue 08:00", "Final Score"),
-        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every fri,mon,tue 08:00", "Score Update AM"),
-        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 15:00", "Score Update PM"),
-        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 19:00", "Score Update PM Sunday"),
+        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every fri,mon 07:30", "Score Update AM"),
+        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 15:30", "Score Update PM"),
+        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 19:30", "Score Update PM Sunday"),
         { telegramService.sendMessage(espnService.getProjectedScoreboard()) } to Pair("every wed 08:00",
             "Score Projections"),
         { telegramService.sendMessage(espnService.getWaiverReport()) } to Pair("every wed 08:00", "Waiver Report"),
