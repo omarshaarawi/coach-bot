@@ -246,28 +246,14 @@ class EspnService(espnConfig: ESPNConfig) {
 
     private fun getTeamRoster(): MutableMap<String, String> {
         val takenPlayers = mutableMapOf<String, String>()
-        val magdy = league.teams[0]
-        val omar = league.teams[1]
-        val ashok = league.teams[2]
-        val nolan = league.teams[3]
-        val michael = league.teams[4]
-        val vince = league.teams[5]
+        val firstNamePattern = "\"([^\"]*)\"".toRegex()
 
-        for (team in league.teams) {
-            for (player in team.roster) {
-                when (team) {
-                    magdy -> takenPlayers[player.name] = "Magdy"
-                    omar -> takenPlayers[player.name] = "Omar"
-                    ashok -> takenPlayers[player.name] = "Ashok"
-                    nolan -> takenPlayers[player.name] = "Nolan"
-                    michael -> takenPlayers[player.name] = "Michael"
-                    vince -> takenPlayers[player.name] = "Vince¬"
-                }
+        league.teams.forEach { team ->
+            team.roster.forEach { player ->
+                takenPlayers[player.name] = firstNamePattern.find(team.owner)!!.groupValues[1].trim()
             }
         }
-
         return takenPlayers
-
     }
 
     private fun freeAgents(): MutableList<String> {
