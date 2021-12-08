@@ -62,22 +62,19 @@ fun main() {
     }
 
     val map = mapOf(
-        { telegramService.sendMessage(espnService.getPowerRankings()) } to Pair("every tue 17:30", "Power Rankings"),
+        { telegramService.sendMessage(espnService.getPowerRankings()) } to Pair("every tue 18:30", "Power Rankings"),
         { telegramService.sendMessage(espnService.getMatchups()) } to Pair("every thu 18:00", "Matchups"),
         { telegramService.sendMessage(espnService.getCloseScores()) } to Pair("every mon 17:30", "Close Scores"),
         { telegramService.sendMessage(espnService.scoreboard(true)) } to Pair("every tue 08:00", "Final Score"),
         { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every fri,mon 07:30", "Score Update AM"),
         { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 15:30", "Score Update PM"),
-        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 19:30", "Score Update PM Sunday"),
+        { telegramService.sendMessage(espnService.scoreboard()) } to Pair("every sun 19:00", "Score Update PM Sunday"),
         { telegramService.sendMessage(espnService.getProjectedScoreboard()) } to Pair("every wed 18:00",
             "Score Projections"),
         { telegramService.sendMessage(espnService.getWaiverReport()) } to Pair("every wed 08:00", "Waiver Report"),
         { telegramService.sendMessage(espnService.getMonitor()) } to Pair("every sun 08:00", "Player Monitor"),
     )
-
-
-
-
+    
     embeddedServer(Netty, config[Config.Ktor.Deployment.port], config[Config.Ktor.Deployment.host]) {
         LOGGER.info { "Starting bot polling" }
         bot.startPolling()

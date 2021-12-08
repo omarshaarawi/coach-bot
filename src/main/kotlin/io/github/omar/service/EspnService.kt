@@ -91,7 +91,7 @@ class EspnService(espnConfig: ESPNConfig) {
 
         return """
 
-            *Trophies:*
+            *Trophies*
             
             $lowestScoreStr
 
@@ -117,7 +117,7 @@ class EspnService(espnConfig: ESPNConfig) {
             """.trimIndent())
         }
 
-        return score.joinToString(prefix = "\n*Power Rankings:*\n").replace(",", "")
+        return score.joinToString(prefix = "\n*Power Rankings*\n").replace(",", "")
     }
 
     private fun getScoreBoard(final: Boolean): String {
@@ -365,7 +365,7 @@ class EspnService(espnConfig: ESPNConfig) {
         text = if (report.isEmpty()) {
             listOf("*No waiver transactions*")
         } else {
-            listOf("*Waiver Report %s:* \n".format(today)) + report
+            listOf("*Waiver Report %s* \n".format(today)) + report
         }
 
         return text.joinToString(separator = "\n")
@@ -381,7 +381,7 @@ class EspnService(espnConfig: ESPNConfig) {
             monitor += scanRoster(i.awayLineup, (i.awayTeam as Team))
         }
         val text: String = if (monitor.isNotEmpty()) {
-            "*Starting Players to Monitor:*"
+            "*Starting Players to Monitor*"
         } else {
             "*No Players to Monitor this week. Good Luck!*"
         }
