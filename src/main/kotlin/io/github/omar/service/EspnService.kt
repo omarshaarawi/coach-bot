@@ -23,11 +23,11 @@ class EspnService(espnConfig: ESPNConfig) {
             espnConfig.espnS2
         )
 
-    fun getCurrentWeek(): Int {
+    private fun getCurrentWeek(): Int {
         return league.currentWeek
     }
 
-    fun getTrophies(week: Int): String {
+    private fun getTrophies(week: Int): String {
         val matchups = league.boxScore(week = week)
         var lowScore = 9999.0
         var lowTeamName = ""

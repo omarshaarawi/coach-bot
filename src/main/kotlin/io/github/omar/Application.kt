@@ -62,6 +62,7 @@ fun main() {
     }
 
     val map = mapOf(
+        { espnService.refresh() } to Pair("every tuesday 07:58", "refresh league"),
         { telegramService.sendMessage(espnService.getPowerRankings()) } to Pair("every tue 18:30", "Power Rankings"),
         { telegramService.sendMessage(espnService.getMatchups()) } to Pair("every thu 18:00", "Matchups"),
         { telegramService.sendMessage(espnService.getCloseScores()) } to Pair("every mon 17:30", "Close Scores"),
@@ -74,7 +75,7 @@ fun main() {
         { telegramService.sendMessage(espnService.getWaiverReport()) } to Pair("every wed 08:00", "Waiver Report"),
         { telegramService.sendMessage(espnService.getMonitor()) } to Pair("every sun 08:00", "Player Monitor"),
     )
-    
+
     embeddedServer(Netty, config[Config.Ktor.Deployment.port], config[Config.Ktor.Deployment.host]) {
         LOGGER.info { "Starting bot polling" }
         bot.startPolling()
