@@ -16,7 +16,6 @@ on:
         required: true
   push:
 
-
 permissions: read-all
 
 jobs:
