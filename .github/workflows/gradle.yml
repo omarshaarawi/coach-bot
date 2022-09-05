@@ -10,6 +10,8 @@ name: Gradle Build
 on:
   workflow_call:
   push:
+    branches: [ "main" ]
+
 
 permissions: read-all
 
