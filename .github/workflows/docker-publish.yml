@@ -28,9 +28,22 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: coach-bot.tar
+          path: build/distributions
+
+      # Install the cosign tool except on PR
+      # https://github.com/sigstore/cosign-installer
       - name: Install cosign
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@7e0881f8fe90b25e305bbf0309761e9314607e25
