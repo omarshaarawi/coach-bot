@@ -6,5 +6,5 @@ data class TelegramConfig(
     val token: String,
     @ConfigAlias("chat_id")
     val chatId: Long,
-    val timezone: String,
+    val timezone: String
 )

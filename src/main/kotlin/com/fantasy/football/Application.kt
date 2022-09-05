@@ -42,7 +42,7 @@ fun main() {
         }
     }
     val scheduledMessages = mapOf(
-        /** TODO:
+        /** TODO :
          *  power rankings - every tue 17:30
          *  close scores - every tue 17:30
          *  waiver report - every wed 08:00
@@ -62,7 +62,7 @@ fun main() {
         { telegramService.sendMessage(yahoo.getScoreBoard(projections = true)) } to Pair(
             "every wed 08:00",
             "Score Projections"
-        ),
+        )
     )
 
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {

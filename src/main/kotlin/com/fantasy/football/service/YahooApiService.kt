@@ -28,15 +28,29 @@ class YahooApiService(private val yahooClient: YahooClient) {
             val team1 = it.teams[0]
             val team2 = it.teams[1]
             if (projections) {
-                scores.add("${team1.name} ${team1.teamProjectedPoints?.total} - ${team2.name} ${team2.teamProjectedPoints?.total}")
+                scores.add(
+                    "${team1.name} ${team1.teamProjectedPoints?.total}" +
+                        " - ${team2.name} ${team2.teamProjectedPoints?.total}"
+                )
             } else {
-                scores.add("${team1.name} ${team1.teamPoints?.total} - ${team2.name} ${team2.teamPoints?.total}")
+                scores.add(
+                    "${team1.name} ${team1.teamPoints?.total}" +
+                        " - ${team2.name} ${team2.teamPoints?.total}"
+                )
             }
         }
         return scores.joinToString(
-            prefix = if (final) "*Final Scores*\n\n" else if (projections) "*Projected Scores*\n\n" else "*Current Scores*\n\n",
+            prefix = scoreboardPrefix(final, projections),
             separator = "\n\n"
         )
+    }
+
+    private fun scoreboardPrefix(final: Boolean, projections: Boolean): String {
+        return if (final) {
+            "*Final Scores*\n\n"
+        } else if (projections) {
+            "*Projected Scores*\n\n"
+        } else "*Current Scores*\n\n"
     }
 
     fun getStandings(): String {
