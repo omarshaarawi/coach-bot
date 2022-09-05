@@ -1,4 +1,4 @@
-name: Docker
+name: CD
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -18,7 +18,7 @@ env:
 
 jobs:
   gradle:
-    uses: omarshaarawi/coach-bot/.github/workflows/gradle.yml@main
+    uses: omarshaarawi/coach-bot/.github/workflows/gradle.yml@stage
     secrets:
       username: ${{ secrets.GIT_USERNAME }}
       token: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +39,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: coach-bot.tar
+          name: coach-bot
           path: build/distributions
 
       # Install the cosign tool except on PR
