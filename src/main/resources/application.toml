@@ -1,0 +1,14 @@
+[yahoo]
+client_id="${YAHOO_CLIENT_ID}"
+client_secret="${YAHOO_CLIENT_SECRET}"
+refresh_token="${YAHOO_REFRESH_TOKEN}"
+
+[telegram]
+token = "${TELEGRAM_TOKEN}"
+chat_id = "${TELEGRAM_CHAT_ID}"
+timezone = "America/Chicago"
+
+[db]
+user = "postgres"
+password = "${DB_PASSWORD}"
+url = "${DB_URL}"
