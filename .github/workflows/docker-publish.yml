@@ -19,7 +19,9 @@ env:
 jobs:
   gradle:
     uses: omarshaarawi/coach-bot/.github/workflows/gradle.yml@main
-    secrets: inherit
+    secrets:
+      username: ${{ secrets.GIT_USERNAME }}
+      token: ${{ secrets.GITHUB_TOKEN }}
   publish:
     needs: gradle
     runs-on: ubuntu-latest
