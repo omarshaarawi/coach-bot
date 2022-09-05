@@ -6,6 +6,7 @@ name: Docker
 # documentation.
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main", "stage" ]
 env:
@@ -16,8 +17,11 @@ env:
 
 
 jobs:
-  build:
-
+  gradle:
+    uses: omarshaarawi/coach-bot/.github/workflows/gradle.yml@main
+    secrets: inherit
+  publish:
+    needs: gradle
     runs-on: ubuntu-latest
     permissions:
       contents: read

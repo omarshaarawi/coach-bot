@@ -9,11 +9,6 @@ name: Gradle Build
 
 on:
   workflow_call:
-    secrets:
-      username:
-        required: true
-      token:
-        required: true
   push:
 
 permissions: read-all
