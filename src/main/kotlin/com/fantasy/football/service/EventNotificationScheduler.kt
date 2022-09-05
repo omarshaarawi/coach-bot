@@ -1,15 +1,21 @@
 package com.fantasy.football.service
 
+import com.fantasy.football.exceptions.SchedulerException
 import com.github.shyiko.skedule.Schedule
+import mu.KotlinLogging
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import mu.KotlinLogging
 
 class EventNotificationScheduler(private val timezone: String) {
 
-    private val executor = ScheduledThreadPoolExecutor(10)
+    private val executor = ScheduledThreadPoolExecutor(CORE_POOL_SIZE)
+
+    companion object {
+        private val LOGGER = KotlinLogging.logger { }
+        private const val CORE_POOL_SIZE = 10
+    }
 
     init {
         executor.removeOnCancelPolicy = true
@@ -25,14 +31,9 @@ class EventNotificationScheduler(private val timezone: String) {
                 action.invoke()
                 scheduleNextExecution(action, stringSchedule)
             }, nextExecution.toEpochSecond() - now.toEpochSecond(), TimeUnit.SECONDS)
-                    LOGGER.info { "Schedule ${stringSchedule.second} notification for $nextExecution" }
-                } catch (ex: Exception) {
-                    LOGGER.error(ex) { "Could not schedule next notification!" }
-                }
-            }
-
-            companion object {
-                private val LOGGER = KotlinLogging.logger { }
-            }
+            LOGGER.info { "Schedule ${stringSchedule.second} notification for $nextExecution" }
+        } catch (ex: SchedulerException) {
+            LOGGER.error(ex) { "Could not schedule next notification!" }
         }
-        
+    }
+}

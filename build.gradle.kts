@@ -26,7 +26,7 @@ repositories {
     maven {
         url = uri("https://maven.pkg.github.com/omarshaarawi/fantasy-football-jvm")
         credentials {
-            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("GIT_USERNAME")
             password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
         }
     }
@@ -56,6 +56,23 @@ dependencies {
     implementation(libs.krontab)
     implementation(libs.fuzzywuzzy)
     jooqGenerator(libs.postgres)
+    detektPlugins(libs.detektFormatting)
+}
+
+detekt {
+    config = files("$projectDir/gradle/detekt.yml")
+    buildUponDefaultConfig = true
+    parallel = true
+}
+
+ktlint {
+    verbose.set(true)
+    debug.set(true)
+    android.set(false)
+    ignoreFailures.set(false)
+    outputToConsole.set(true)
+    enableExperimentalRules.set(true)
+    disabledRules.set(setOf("indent"))
 }
 
 jooq {
