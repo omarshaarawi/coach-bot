@@ -3,7 +3,9 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-
+.env.local
+.env.stage
+.env.prod
 ### STS ###
 .apt_generated
 .classpath

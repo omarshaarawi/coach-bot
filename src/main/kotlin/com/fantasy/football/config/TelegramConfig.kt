@@ -5,6 +5,6 @@ import com.sksamuel.hoplite.ConfigAlias
 data class TelegramConfig(
     val token: String,
     @ConfigAlias("chat_id")
-    val chatId: Long,
+    val chatId: String,
     val timezone: String
 )

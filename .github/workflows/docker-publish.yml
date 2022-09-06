@@ -17,13 +17,13 @@ env:
 
 
 jobs:
-  gradle:
+  build:
     uses: omarshaarawi/coach-bot/.github/workflows/gradle.yml@stage
     secrets:
       username: ${{ secrets.GIT_USERNAME }}
       token: ${{ secrets.GITHUB_TOKEN }}
-  publish:
-    needs: gradle
+  deploy:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -93,6 +93,13 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         env:
           COSIGN_EXPERIMENTAL: "true"
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
+
+      - name: Deploy to Hetzner Cloud
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_DOCKER_HOST }}
+          username: ${{ secrets.REMOTE_DOCKER_USER }}
+          fingerprint: ${{ secrets.DOCKER_SSH_PUBLIC_KEY }}
+          key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
+          script: whoami
