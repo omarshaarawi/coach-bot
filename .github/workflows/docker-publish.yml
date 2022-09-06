@@ -7,8 +7,10 @@ name: CD
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main", "stage" ]
+  pull_request:
+    branches: [ stage ]
+    types:
+      - closed
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
@@ -103,6 +105,6 @@ jobs:
           key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
           script: |
             cd ~/docker-deployment
-            docker compose pull
+            docker compose pull coachbot-stage
             docker compose up coachbot-stage -d --remove-orphans
             docker image prune
