@@ -3,4 +3,4 @@ scrape_configs:
     metrics_path: /metrics-micrometer
     scrape_interval: 5s
     static_configs:
-      - targets: ['coachbot-stage:9001']
+      - targets: ['coachbot-stage:8080']

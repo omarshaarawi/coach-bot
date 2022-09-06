@@ -100,6 +100,9 @@ jobs:
         with:
           host: ${{ secrets.REMOTE_DOCKER_HOST }}
           username: ${{ secrets.REMOTE_DOCKER_USER }}
-          fingerprint: ${{ secrets.DOCKER_SSH_PUBLIC_KEY }}
           key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
-          script: whoami
+          script: |
+            cd ~/docker-deployment
+            docker compose pull
+            docker compose up coachbot-stage -d --remove-orphans
+            docker image prune
