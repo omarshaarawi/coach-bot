@@ -1,7 +1,8 @@
 [yahoo]
-client_id="${YAHOO_CLIENT_ID}"
-client_secret="${YAHOO_CLIENT_SECRET}"
-refresh_token="${YAHOO_REFRESH_TOKEN}"
+client_id = "${YAHOO_CLIENT_ID}"
+client_secret = "${YAHOO_CLIENT_SECRET}"
+refresh_token = "${YAHOO_REFRESH_TOKEN}"
+league_id = "${YAHOO_LEAGUE_ID}"
 
 [telegram]
 token = "${TELEGRAM_TOKEN}"

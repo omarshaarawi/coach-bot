@@ -17,7 +17,7 @@ class DSLFactory(db: DatabaseConfig) {
     init {
         config.jdbcUrl = db.url
         config.username = db.user
-        config.password = db.password
+        config.password = db.password.toString()
     }
 
     fun build(): DSLContext {

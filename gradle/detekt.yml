@@ -1,3 +1,11 @@
 formatting:
-    Indentation:
-      active: false
+  ImportOrdering:
+    active: false
+  Indentation:
+    active: false
+complexity:
+  LongMethod:
+    active: false
+exceptions:
+  TooGenericExceptionCaught:
+    active: false

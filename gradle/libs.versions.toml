@@ -14,7 +14,7 @@ telegram = "6.0.6"
 skedule = "0.4.0"
 krontab = "0.6.5"
 fuzzywuzzy = "1.3.1"
-yahoo-api = "0.0.3"
+yahoo-api = "0.0.7"
 jooq = "7.1.1"
 hikari = "5.0.1"
 postgres = "42.5.0"
@@ -29,7 +29,7 @@ kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kote
 kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
 hoplite = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
-hoptlite-toml = {module= "com.sksamuel.hoplite:hoplite-toml", version.ref = "hoplite" }
+hoptlite-toml = { module = "com.sksamuel.hoplite:hoplite-toml", version.ref = "hoplite" }
 ktor-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer-jvm", version.ref = "ktor" }
@@ -37,7 +37,7 @@ micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 konf = { module = "com.uchuhimo:konf", version.ref = "konf" }
 telegram = { module = "io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram", version.ref = "telegram" }
-skedule = {module = "com.github.shyiko.skedule:skedule", version.ref = "skedule" }
+skedule = { module = "com.github.shyiko.skedule:skedule", version.ref = "skedule" }
 krontab = { module = "dev.inmo:krontab", version.ref = "krontab" }
 fuzzywuzzy = { module = "me.xdrop:fuzzywuzzy", version.ref = "fuzzywuzzy" }
 yahoo-api = { module = "com.fantasy.football:yahoo-api", version.ref = "yahoo-api" }
@@ -47,12 +47,12 @@ postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 [bundles]
 kotest = ["kotest-runner", "kotest-assertions", "kotest-property"]
 hoplite = ["hoplite", "hoptlite-toml"]
-ktor = ["ktor-core","ktor-netty", "ktor-micrometer"]
+ktor = ["ktor-core", "ktor-netty", "ktor-micrometer"]
 
 [plugins]
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ktor = { id = "io.ktor.plugin", version.ref = "ktor"}
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 jooq = { id = "nu.studer.jooq", version.ref = "jooq" }

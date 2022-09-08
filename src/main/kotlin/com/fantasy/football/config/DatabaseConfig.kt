@@ -1,3 +1,5 @@
 package com.fantasy.football.config
 
-data class DatabaseConfig(val user: String, val password: String, val url: String)
+import com.sksamuel.hoplite.Masked
+
+data class DatabaseConfig(val user: String, val password: Masked, val url: String)
