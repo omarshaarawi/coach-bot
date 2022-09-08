@@ -8,9 +8,8 @@ import com.github.kotlintelegrambot.network.fold
 import mu.KotlinLogging
 
 class TelegramService(private val bot: Bot, private val telegramConfig: TelegramConfig) {
-
     fun sendMessage(string: String) {
-        val chatId = ChatId.fromId(telegramConfig.chatId.toLong())
+        val chatId = ChatId.fromId(telegramConfig.chatId.toString().toLong())
         val newString = escapeInvalidChars(string)
 
         val messageResponse =

@@ -32,7 +32,7 @@ repositories {
     }
     mavenCentral()
     maven("https://jitpack.io")
-    mavenLocal()
+//    mavenLocal()
 }
 
 tasks.withType<KotlinCompile> {
@@ -42,9 +42,7 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    implementation(libs.yahoo.api) {
-        isChanging = true
-    }
+    implementation(libs.yahoo.api)
     implementation(libs.bundles.ktor)
     implementation(libs.bundles.hoplite)
     implementation(libs.hikari)

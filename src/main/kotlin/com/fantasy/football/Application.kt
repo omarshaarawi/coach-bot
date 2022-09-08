@@ -16,7 +16,10 @@ import com.sksamuel.hoplite.addResourceSource
 import config.YahooConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import mu.KotlinLogging
 import service.YahooClient
+
+private val LOGGER = KotlinLogging.logger { }
 
 fun main() {
     lateinit var bot: Bot
@@ -27,6 +30,8 @@ fun main() {
         .addResourceSource("/application.toml")
         .build()
         .loadConfigOrThrow<Test>()
+
+    LOGGER.info { config.toString() }
 
     val yahoo = YahooApiService(YahooClient())
     val telegramService by lazy { TelegramService(bot, config.telegram) }
@@ -39,22 +44,27 @@ fun main() {
             command("proj") { telegramService.sendMessage(yahoo.getScoreBoard(projections = true)) }
             command("final") { telegramService.sendMessage(yahoo.getScoreBoard(final = true)) }
             command("matchups") { telegramService.sendMessage(yahoo.getMatchups()) }
+            command("standings") { telegramService.sendMessage(yahoo.getStandings()) }
+            command("waiver") { telegramService.sendMessage(yahoo.getTransactions()) }
         }
     }
     val scheduledMessages = mapOf(
         /** TODO :
-         *  power rankings - every tue 17:30
-         *  close scores - every tue 17:30
-         *  waiver report - every wed 08:00
-         *  player monitor - every sun 08:00
+         *  Close Scores - Mon - 18:30 east coast time
+         *  Power rankings - Tue - 18:30 local time
+         *  Players to Monitor report - Sun - 7:30 local time
+         *  (Players in starting lineup that are Questionable, Doubtful, or Out)
          */
+
+        { telegramService.sendMessage(yahoo.getTransactions()) } to Pair("every wed 08:00", "Waiver Report"),
+        { telegramService.sendMessage(yahoo.getStandings()) } to Pair("every wed 08:00", "Current Standings"),
         { telegramService.sendMessage(yahoo.getMatchups()) } to Pair("every thu 18:30", "Matchups"),
         { telegramService.sendMessage(yahoo.getScoreBoard(final = true)) } to Pair(
             "every tue 08:00",
             "Final Score"
         ),
         { telegramService.sendMessage(yahoo.getScoreBoard()) } to Pair(
-            "every fri,mon,tue 08:00",
+            "every fri,mon 08:00",
             "Score Update AM"
         ),
         { telegramService.sendMessage(yahoo.getScoreBoard()) } to Pair("every sun 15:00", "Score Update PM"),
