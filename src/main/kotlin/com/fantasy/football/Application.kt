@@ -50,7 +50,7 @@ suspend fun main() {
         }
     }
     val scheduledMessages = mapOf(
-        { telegramService.sendMessage(yahoo.getMonitor()) } to Pair("every sunday 8:00", "Player Monitor"),
+        { telegramService.sendMessage(yahoo.getMonitor()) } to Pair("every sunday 08:00", "Player Monitor"),
         { telegramService.sendMessage(yahoo.getCloseScores()) } to Pair("every mon 18:30", "Close Scores"),
         { telegramService.sendMessage(yahoo.getTransactions()) } to Pair("every wed 08:00", "Waiver Report"),
         { telegramService.sendMessage(yahoo.getStandings()) } to Pair("every wed 08:00", "Current Standings"),
