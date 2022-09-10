@@ -21,7 +21,7 @@ import service.YahooClient
 
 private val LOGGER = KotlinLogging.logger { }
 
-fun main() {
+suspend fun main() {
     lateinit var bot: Bot
 
     data class Test(val telegram: TelegramConfig, val yahoo: YahooConfig, val db: DatabaseConfig)
@@ -46,16 +46,12 @@ fun main() {
             command("matchups") { telegramService.sendMessage(yahoo.getMatchups()) }
             command("standings") { telegramService.sendMessage(yahoo.getStandings()) }
             command("waiver") { telegramService.sendMessage(yahoo.getTransactions()) }
+            command("monitor") { telegramService.sendMessage(yahoo.getMonitor()) }
         }
     }
     val scheduledMessages = mapOf(
-        /** TODO :
-         *  Close Scores - Mon - 18:30 east coast time
-         *  Power rankings - Tue - 18:30 local time
-         *  Players to Monitor report - Sun - 7:30 local time
-         *  (Players in starting lineup that are Questionable, Doubtful, or Out)
-         */
-
+        { telegramService.sendMessage(yahoo.getMonitor()) } to Pair("every sunday 8:00", "Player Monitor"),
+        { telegramService.sendMessage(yahoo.getCloseScores()) } to Pair("every mon 18:30", "Close Scores"),
         { telegramService.sendMessage(yahoo.getTransactions()) } to Pair("every wed 08:00", "Waiver Report"),
         { telegramService.sendMessage(yahoo.getStandings()) } to Pair("every wed 08:00", "Current Standings"),
         { telegramService.sendMessage(yahoo.getMatchups()) } to Pair("every thu 18:30", "Matchups"),

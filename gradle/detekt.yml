@@ -6,6 +6,10 @@ formatting:
 complexity:
   LongMethod:
     active: false
+  TooManyFunctions:
+    active: false
+  ComplexCondition:
+    active: false
 exceptions:
   TooGenericExceptionCaught:
     active: false
