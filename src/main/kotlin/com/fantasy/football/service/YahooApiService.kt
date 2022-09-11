@@ -1,15 +1,17 @@
 package com.fantasy.football.service
 
-import FantasyContentResource // ktlint-disable import-ordering
+import FantasyContentResource
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
+import kotlinx.coroutines.runBlocking
+import me.xdrop.fuzzywuzzy.FuzzySearch
+import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
+import models.TeamsResource
+import service.YahooClient
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Date
 import kotlin.math.abs
-import kotlinx.coroutines.runBlocking
-import models.TeamsResource
-import service.YahooClient
 
 class YahooApiService(private val yahooClient: YahooClient) {
 
@@ -26,6 +28,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
         const val MIN_CLOSE_SCORE_DIFF = -16
         const val MAX_CLOSE_SCORE_DIFF = 16
         const val MIN_CLOSE_SCORE = 0
+        const val FUZZY_SCORE_THRESHOLD = 80
     }
 
     init {
@@ -234,6 +237,19 @@ class YahooApiService(private val yahooClient: YahooClient) {
             score = mutableListOf("None")
         }
         return score.joinToString(prefix = "*Close Scores*\n\n", separator = "\n\n")
+    }
+
+    fun searchPlayer(name: String): String {
+        val teamRosters = runBlocking { getTeamRosters() }
+        var message: String = "No one"
+        teamRosters.forEach { teamRoster ->
+            val roster = teamRoster.roster
+            val match: BoundExtractedResult<Player> = FuzzySearch.extractOne(name, roster) { x: Player -> x.name }
+            if (match.score > FUZZY_SCORE_THRESHOLD) {
+                message = "${match.referent.name} belongs to ${teamRoster.teamName}"
+            }
+        }
+        return message
     }
 
     private fun scanRoster(roster: List<Player>): String {
