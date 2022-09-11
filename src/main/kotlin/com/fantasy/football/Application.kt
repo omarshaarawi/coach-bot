@@ -11,6 +11,8 @@ import com.github.kotlintelegrambot.Bot
 import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.command
+import com.github.kotlintelegrambot.dispatcher.telegramError
+import com.github.kotlintelegrambot.logging.LogLevel
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
 import config.YahooConfig
@@ -21,15 +23,12 @@ import service.YahooClient
 
 private val LOGGER = KotlinLogging.logger { }
 
-suspend fun main() {
+fun main() {
     lateinit var bot: Bot
 
     data class Test(val telegram: TelegramConfig, val yahoo: YahooConfig, val db: DatabaseConfig)
 
-    val config = ConfigLoaderBuilder.default()
-        .addResourceSource("/application.toml")
-        .build()
-        .loadConfigOrThrow<Test>()
+    val config = ConfigLoaderBuilder.default().addResourceSource("/application.toml").build().loadConfigOrThrow<Test>()
 
     LOGGER.info { config.toString() }
 
@@ -38,7 +37,7 @@ suspend fun main() {
 
     bot = bot {
         token = config.telegram.token
-
+        logLevel = LogLevel.Network.Body
         dispatch {
             command("scores") { telegramService.sendMessage(yahoo.getScoreBoard()) }
             command("proj") { telegramService.sendMessage(yahoo.getScoreBoard(projections = true)) }
@@ -47,6 +46,15 @@ suspend fun main() {
             command("standings") { telegramService.sendMessage(yahoo.getStandings()) }
             command("waiver") { telegramService.sendMessage(yahoo.getTransactions()) }
             command("monitor") { telegramService.sendMessage(yahoo.getMonitor()) }
+            command("search") {
+                val playerName = args.joinToString().replace(",", "")
+                telegramService.sendMessage(yahoo.searchPlayer(playerName))
+            }
+            telegramError {
+                LOGGER.error {
+                    error.getErrorMessage()
+                }
+            }
         }
     }
     val scheduledMessages = mapOf(
