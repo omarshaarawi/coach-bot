@@ -3,16 +3,16 @@ package com.fantasy.football.service
 import FantasyContentResource
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.util.Date
-import kotlin.math.abs
 import kotlinx.coroutines.runBlocking
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
 import models.MatchupResource
 import models.TeamsResource
 import service.YahooClient
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.Date
+import kotlin.math.abs
 
 class YahooApiService(private val yahooClient: YahooClient) {
 
@@ -31,6 +31,9 @@ class YahooApiService(private val yahooClient: YahooClient) {
         const val MAX_CLOSE_SCORE_DIFF = 16
         const val MIN_CLOSE_SCORE = 0
         const val FUZZY_SCORE_THRESHOLD = 80
+        const val FREE_AGENT_COUNT = 0
+        const val FREE_AGENT_INCREMENT = 9
+        const val FREE_AGENT_COUNT_MAX = 150
     }
 
     init {
@@ -102,10 +105,14 @@ class YahooApiService(private val yahooClient: YahooClient) {
             }
         }
 
-        val lowScoreString = "Low score: $lowTeamName with ${lowScore.roundDecimal(2)} points"
-        val highScoreString = "High score: $highTeamName with ${highScore.roundDecimal(2)} points"
-        val closeScoreString = "$closeWinner barely beat $closeLoser by a margin of ${closestScore.roundDecimal(2)}"
-        val blowoutString = "$blownOutTeamName blown out by $ownererTeamName by a margin of ${biggestBlowout.roundDecimal(2)}"
+        val lowScoreString = "Low score: $lowTeamName with " +
+            "${lowScore.roundDecimal(2)} points"
+        val highScoreString = "High score: $highTeamName with " +
+            "${highScore.roundDecimal(2)} points"
+        val closeScoreString = "$closeWinner barely beat $closeLoser by a margin of " +
+            "${closestScore.roundDecimal(2)}"
+        val blowoutString = "$blownOutTeamName blown out by $ownererTeamName by a margin of " +
+            "${biggestBlowout.roundDecimal(2)}"
         return """
                 *Trophies of the week:*
                 
@@ -293,8 +300,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
     private fun getAvailablePlayers(): MutableList<Player> {
         val nflGames = runBlocking { nflGamesService.getGames() }
         val listOfPlayers = mutableListOf<Player>()
-        var count = 0
-        while (count <= 150) {
+        var count = FREE_AGENT_COUNT
+        while (count <= FREE_AGENT_COUNT_MAX) {
             val freeAgents = yahooClient.getAvailablePlayers(currentWeek, count)
             freeAgents!!.forEach { player ->
                 val hasPlayed = nflGames.getValue(player.editorialTeamFullName!!)
@@ -310,7 +317,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                     )
                 )
             }
-            count += 25
+            count += FREE_AGENT_INCREMENT
         }
 
         return listOfPlayers
