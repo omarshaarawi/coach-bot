@@ -10,6 +10,11 @@ complexity:
     active: false
   ComplexCondition:
     active: false
+  NestedBlockDepth:
+    active: false
 exceptions:
   TooGenericExceptionCaught:
+    active: false
+style:
+  ReturnCount:
     active: false
