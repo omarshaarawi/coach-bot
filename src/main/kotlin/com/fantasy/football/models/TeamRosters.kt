@@ -6,6 +6,7 @@ data class TeamRosters(
 ) {
     data class Player(
         val name: String,
+        val teamName: String,
         val position: String,
         val status: String?,
         val selectedPosition: String?,

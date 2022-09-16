@@ -3,19 +3,21 @@ package com.fantasy.football.service
 import FantasyContentResource
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
-import kotlinx.coroutines.runBlocking
-import me.xdrop.fuzzywuzzy.FuzzySearch
-import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
-import models.TeamsResource
-import service.YahooClient
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Date
 import kotlin.math.abs
+import kotlinx.coroutines.runBlocking
+import me.xdrop.fuzzywuzzy.FuzzySearch
+import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
+import models.MatchupResource
+import models.TeamsResource
+import service.YahooClient
 
 class YahooApiService(private val yahooClient: YahooClient) {
 
-    private var numberOfTeams: Int?
+    private val numberOfTeams: Int?
+    private val currentWeek: Int
     private var teamNameKeyMap = mutableMapOf<Int, String>()
     private val nflGamesService = NFLGamesService()
 
@@ -34,7 +36,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
     init {
         val league = yahooClient.getLeagueTeams()
         numberOfTeams = league?.numTeams
-        league?.teams?.forEach {
+        currentWeek = league?.currentWeek!!
+        league.teams?.forEach {
             teamNameKeyMap[it.teamId] = it.name
         }
     }
@@ -43,7 +46,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return yahooClient.getLeague()
     }
 
-    private fun getTrophies(): String {
+    private fun getTrophies(matchups: List<MatchupResource>): String {
         var lowScore = LOW_SCORE
         var lowTeamName = ""
         var highScore = HIGH_SCORE
@@ -54,7 +57,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
         var biggestBlowout = BIGGEST_BLOWOUT
         var blownOutTeamName = ""
         var ownererTeamName = ""
-        yahooClient.getScoreboard()?.matchups?.forEach { matchup ->
+        matchups.forEach { matchup ->
             val homeTeam = matchup.teams[0]
             val awayTeam = matchup.teams[1]
 
@@ -99,23 +102,27 @@ class YahooApiService(private val yahooClient: YahooClient) {
             }
         }
 
-        val lowScoreString = "Low score: $lowTeamName with $lowScore points"
-        val highScoreString = "High score: $highTeamName with $highScore points"
-        val closeScoreString = "$closeWinner barely beat $closeLoser by a margin of $closestScore"
-        val blowoutString = "$blownOutTeamName blown out by $ownererTeamName by a margin of $biggestBlowout"
+        val lowScoreString = "Low score: $lowTeamName with ${lowScore.roundDecimal(2)} points"
+        val highScoreString = "High score: $highTeamName with ${highScore.roundDecimal(2)} points"
+        val closeScoreString = "$closeWinner barely beat $closeLoser by a margin of ${closestScore.roundDecimal(2)}"
+        val blowoutString = "$blownOutTeamName blown out by $ownererTeamName by a margin of ${biggestBlowout.roundDecimal(2)}"
         return """
                 *Trophies of the week:*
+                
                 $lowScoreString
+                
                 $highScoreString
+                
                 $closeScoreString
+                
                 $blowoutString
             """.trimIndent()
     }
 
     fun getScoreBoard(final: Boolean = false, projections: Boolean = false): String {
         val scores = mutableListOf<String>()
-
-        yahooClient.getScoreboard()?.matchups?.forEach {
+        val matchups = yahooClient.getScoreboard(if (final) currentWeek - 1 else currentWeek)?.matchups
+        matchups?.forEach {
             val team1 = it.teams[0]
             val team2 = it.teams[1]
             if (projections) {
@@ -131,7 +138,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
             }
         }
         if (final) {
-            scores.add(getTrophies())
+            scores.add(getTrophies(matchups!!))
         }
         return scores.joinToString(prefix = scoreboardPrefix(final, projections), separator = "\n\n")
     }
@@ -166,20 +173,41 @@ class YahooApiService(private val yahooClient: YahooClient) {
         yahooClient.getTransactions()!!.filter { transaction
             ->
             getDateTime(transaction.timestamp.toString()) == today
-        }.forEach {
-            it.players?.forEach { player ->
-                when (player.transactionData?.type) {
-                    "add" -> {
+        }.forEach { transaction ->
+            when (transaction.type) {
+                "add/drop" -> {
+                    transaction.players?.forEach { player ->
+                        when (player.transactionData?.type) {
+                            "add" -> {
+                                transactions.add(
+                                    "__${player.transactionData!!.destinationTeamName}__ \nADDED " +
+                                        "${player.displayPosition} ${player.name.full}"
+                                )
+                            }
+
+                            "drop" -> {
+                                transactions.add(
+                                    "DROPPED ${player.displayPosition} ${player.name.full}\n"
+                                )
+                            }
+                        }
+                    }
+                }
+
+                "add" -> {
+                    transaction.players?.forEach { player ->
                         transactions.add(
-                            "${player.transactionData!!.destinationTeamName} \nADDED " +
-                                "${player.displayPosition} ${player.name.full}\n".trim()
+                            "${transaction.transactionData!!.destinationTeamName} \nADDED " +
+                                "${player.displayPosition} ${player.name.full}\n"
                         )
                     }
+                }
 
-                    "drop" -> {
+                "drop" -> {
+                    transaction.players?.forEach { player ->
                         transactions.add(
                             "${player.transactionData!!.sourceTeamName} \nDROPPED " +
-                                "${player.displayPosition} ${player.name.full}\n".trim()
+                                "${player.displayPosition} ${player.name.full}\n"
                         )
                     }
                 }
@@ -189,15 +217,15 @@ class YahooApiService(private val yahooClient: YahooClient) {
         if (transactions.isEmpty()) {
             return "No waiver transactions today"
         }
-        return transactions.joinToString(prefix = "*Waiver Report: $today*\n\n", separator = "\n\n")
+        return transactions.joinToString(prefix = "*Waiver Report: $today*\n\n", separator = "\n")
     }
 
     fun getMonitor(): String {
-        val rosters = runBlocking { getTeamRosters() }
+        val rosters = getTeamRosters()
         val monitor = mutableListOf<String>()
 
         rosters.forEach { team ->
-            monitor += scanRoster(team.roster)
+            monitor += scanRoster(team)
         }
 
         val text: String = if (monitor.isNotEmpty()) {
@@ -205,7 +233,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
         } else {
             "*No Players to Monitor this week. Good Luck!*"
         }
-        return monitor.filter { it.isNotBlank() }.joinToString(prefix = text, separator = "\n")
+        return monitor.filter { it.isNotBlank() }.joinToString(prefix = text, separator = "\n\n")
     }
 
     fun getCloseScores(): String {
@@ -219,9 +247,12 @@ class YahooApiService(private val yahooClient: YahooClient) {
             val team1Roster = rosters.find { it.teamName == team1.name }!!.roster
             val team2Roster = rosters.find { it.teamName == team2.name }!!.roster
             val diffScore = team1.teamPoints!!.total - team2.teamPoints!!.total
-
-            if ((MIN_CLOSE_SCORE_DIFF < diffScore && !allPlayed(team2Roster)) ||
-                MIN_CLOSE_SCORE <= diffScore && diffScore < MAX_CLOSE_SCORE_DIFF && !allPlayed(team1Roster)
+            val diffProj = team1.teamProjectedPoints!!.total - team2.teamProjectedPoints!!.total
+            if ((
+                    (MIN_CLOSE_SCORE_DIFF < diffScore && !allPlayed(team2Roster)) ||
+                        MIN_CLOSE_SCORE <= diffScore && diffScore < MAX_CLOSE_SCORE_DIFF && !allPlayed(team1Roster)
+                    ) &&
+                diffProj < MAX_CLOSE_SCORE_DIFF
             ) {
                 score.add(
                     "%s %.2f - %.2f %s".format(
@@ -240,26 +271,68 @@ class YahooApiService(private val yahooClient: YahooClient) {
     }
 
     fun searchPlayer(name: String): String {
-        val teamRosters = runBlocking { getTeamRosters() }
-        var message: String = "No one"
+        val teamRosters = getTeamRosters()
+        val freeAgents = getAvailablePlayers()
         teamRosters.forEach { teamRoster ->
             val roster = teamRoster.roster
             val match: BoundExtractedResult<Player> = FuzzySearch.extractOne(name, roster) { x: Player -> x.name }
             if (match.score > FUZZY_SCORE_THRESHOLD) {
-                message = "${match.referent.name} belongs to ${teamRoster.teamName}"
+                return "${match.referent.name} belongs to ${teamRoster.teamName}"
             }
         }
-        return message
+        freeAgents.forEach { _ ->
+            val match: BoundExtractedResult<Player> = FuzzySearch.extractOne(name, freeAgents) { x: Player -> x.name }
+            if (match.score > FUZZY_SCORE_THRESHOLD) {
+                return "${match.referent.name} is a free agent"
+            }
+        }
+
+        return "No player found"
     }
 
-    private fun scanRoster(roster: List<Player>): String {
+    private fun getAvailablePlayers(): MutableList<Player> {
+        val nflGames = runBlocking { nflGamesService.getGames() }
+        val listOfPlayers = mutableListOf<Player>()
+        var count = 0
+        while (count <= 150) {
+            val freeAgents = yahooClient.getAvailablePlayers(currentWeek, count)
+            freeAgents!!.forEach { player ->
+                val hasPlayed = nflGames.getValue(player.editorialTeamFullName!!)
+                listOfPlayers.add(
+                    Player(
+                        player.name.full,
+                        "FA",
+                        player.displayPosition!!,
+                        player.status,
+                        player.selectedPosition?.position,
+                        player.editorialTeamFullName!!,
+                        hasPlayed
+                    )
+                )
+            }
+            count += 25
+        }
+
+        return listOfPlayers
+    }
+
+    private fun scanRoster(team: TeamRosters): String {
         val players = mutableListOf<String>()
-        roster.forEach { player ->
+        team.roster.forEach { player ->
             if (player.status == "O" || player.status == "D" || player.status == "Q") {
-                players.add("${player.position} ${player.name} - ${player.status}")
+                players.add(
+                    "${player.position} ${player.name} - ${player.status}"
+                )
             }
         }
-        return players.joinToString(separator = "\n")
+        return if (players.isNotEmpty()) {
+            players.joinToString(
+                prefix = "__${team.teamName}__\n",
+                separator = "\n"
+            )
+        } else {
+            ""
+        }
     }
 
     private fun allPlayed(roster: List<Player>): Boolean {
@@ -271,8 +344,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return true
     }
 
-    private suspend fun getTeamRosters(): List<TeamRosters> {
-        val nflGames = nflGamesService.getGames()
+    private fun getTeamRosters(): List<TeamRosters> {
+        val nflGames = runBlocking { nflGamesService.getGames() }
         return yahooClient.getTeams()!!.map { team ->
             val listOfPlayers = mutableListOf<Player>()
             team.roster!!.players.forEach { player ->
@@ -280,6 +353,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                 listOfPlayers.add(
                     Player(
                         player.name.full,
+                        team.name,
                         player.displayPosition!!,
                         player.status,
                         player.selectedPosition!!.position,
@@ -321,4 +395,6 @@ class YahooApiService(private val yahooClient: YahooClient) {
             "*Projected Scores*\n\n"
         } else "*Current Scores*\n\n"
     }
+
+    private fun Double.roundDecimal(digit: Int) = "%.${digit}f".format(this)
 }
