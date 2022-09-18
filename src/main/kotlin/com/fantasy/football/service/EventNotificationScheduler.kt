@@ -2,11 +2,11 @@ package com.fantasy.football.service
 
 import com.fantasy.football.exceptions.SchedulerException
 import com.github.shyiko.skedule.Schedule
+import mu.KotlinLogging
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import mu.KotlinLogging
 
 class EventNotificationScheduler(private val timezone: String) {
 
