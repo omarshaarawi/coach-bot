@@ -100,5 +100,5 @@ jobs:
           script: |
             cd ~/docker-deployment
             docker compose pull coachbot-stage
-            docker compose up coachbot-stage -d --remove-orphans
+            docker compose up coachbot-stage -d --remove-orphans --env-file .env.stage
             docker image prune

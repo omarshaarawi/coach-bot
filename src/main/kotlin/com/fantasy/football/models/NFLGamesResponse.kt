@@ -3,7 +3,7 @@ package com.fantasy.football.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class NFLGames(val events: List<Event>) {
+data class NFLGamesResponse(val events: List<Event>) {
     @Serializable
     data class Event(val competitions: List<Competitions>, val status: Status)
 
