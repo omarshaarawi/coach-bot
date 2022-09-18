@@ -1,6 +1,5 @@
 package com.fantasy.football.service
 
-import FantasyContentResource
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
 import kotlinx.coroutines.runBlocking
@@ -43,10 +42,6 @@ class YahooApiService(private val yahooClient: YahooClient) {
         league.teams?.forEach {
             teamNameKeyMap[it.teamId] = it.name
         }
-    }
-
-    private fun getLeague(): FantasyContentResource {
-        return yahooClient.getLeague()
     }
 
     private fun getTrophies(matchups: List<MatchupResource>): String {
@@ -110,9 +105,9 @@ class YahooApiService(private val yahooClient: YahooClient) {
         val highScoreString = "High score: $highTeamName with " +
             "${highScore.roundDecimal(2)} points"
         val closeScoreString = "$closeWinner barely beat $closeLoser by a margin of " +
-            "${closestScore.roundDecimal(2)}"
+            closestScore.roundDecimal(2)
         val blowoutString = "$blownOutTeamName blown out by $ownererTeamName by a margin of " +
-            "${biggestBlowout.roundDecimal(2)}"
+            biggestBlowout.roundDecimal(2)
         return """
                 *Trophies of the week:*
                 
@@ -227,20 +222,20 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return transactions.joinToString(prefix = "*Waiver Report: $today*\n\n", separator = "\n")
     }
 
-    fun getMonitor(): String {
+    fun getMonitor(ignoreDate: Boolean = false): String {
         val rosters = getTeamRosters()
-        val monitor = mutableListOf<String>()
+        val monitor = mutableListOf<String?>()
 
         rosters.forEach { team ->
-            monitor += scanRoster(team)
+            monitor += scanRoster(team, ignoreDate)
         }
 
-        val text: String = if (monitor.isNotEmpty()) {
-            "*Starting Players to Monitor:*\n\n"
+        val text: String = if (monitor.filterNotNull().isNotEmpty()) {
+            "*Starting Players to Monitor Today:*\n\n"
         } else {
-            "*No Players to Monitor this week. Good Luck!*"
+            "*No Players to Monitor Today. Good Luck!*"
         }
-        return monitor.filter { it.isNotBlank() }.joinToString(prefix = text, separator = "\n\n")
+        return monitor.filter { !it.isNullOrBlank() }.joinToString(prefix = text, separator = "\n\n")
     }
 
     fun getCloseScores(): String {
@@ -304,7 +299,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
         while (count <= FREE_AGENT_COUNT_MAX) {
             val freeAgents = yahooClient.getAvailablePlayers(currentWeek, count)
             freeAgents!!.forEach { player ->
-                val hasPlayed = nflGames.getValue(player.editorialTeamFullName!!)
+                val hasPlayed = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.hasPlayed
+                val datePlaying = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.date
                 listOfPlayers.add(
                     Player(
                         player.name.full,
@@ -313,7 +309,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
                         player.status,
                         player.selectedPosition?.position,
                         player.editorialTeamFullName!!,
-                        hasPlayed
+                        hasPlayed,
+                        datePlaying
                     )
                 )
             }
@@ -323,10 +320,18 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return listOfPlayers
     }
 
-    private fun scanRoster(team: TeamRosters): String {
+    private fun scanRoster(team: TeamRosters, ignoreDate: Boolean): String? {
         val players = mutableListOf<String>()
-        team.roster.forEach { player ->
-            if (player.status == "O" || player.status == "D" || player.status == "Q") {
+        val teamRoster = if (ignoreDate) {
+            team.roster
+        } else {
+            team.roster.filter { !it.hasPlayed }
+        }
+        teamRoster.forEach { player ->
+            if (
+                !player.hasPlayed && (player.selectedPosition != "BN" && player.selectedPosition != "IR") &&
+                (player.status == "O" || player.status == "D" || player.status == "Q")
+            ) {
                 players.add(
                     "${player.position} ${player.name} - ${player.status}"
                 )
@@ -338,7 +343,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                 separator = "\n"
             )
         } else {
-            ""
+            null
         }
     }
 
@@ -356,7 +361,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return yahooClient.getTeams()!!.map { team ->
             val listOfPlayers = mutableListOf<Player>()
             team.roster!!.players.forEach { player ->
-                val hasPlayed = nflGames.getValue(player.editorialTeamFullName!!)
+                val hasPlayed = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.hasPlayed
+                val datePlaying = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.date
                 listOfPlayers.add(
                     Player(
                         player.name.full,
@@ -365,7 +371,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
                         player.status,
                         player.selectedPosition!!.position,
                         player.editorialTeamFullName!!,
-                        hasPlayed
+                        hasPlayed,
+                        datePlaying
                     )
                 )
             }

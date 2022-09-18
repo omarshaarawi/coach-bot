@@ -1,25 +1,25 @@
 package com.fantasy.football.service
 
-import com.fantasy.football.config.TelegramConfig
 import com.github.kotlintelegrambot.Bot
 import com.github.kotlintelegrambot.entities.ChatId
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.network.fold
 import mu.KotlinLogging
 
-class TelegramService(private val bot: Bot, private val telegramConfig: TelegramConfig) {
-    fun sendMessage(string: String) {
-        val chatId = ChatId.fromId(telegramConfig.chatId.toLong())
+class TelegramService(private val bot: Bot) {
+    fun sendMessage(string: String, chatId: String) {
+        if (string == "N/A") {
+            return
+        }
         val newString = escapeInvalidChars(string)
-
+        val id = ChatId.fromId(chatId.toLong())
         val messageResponse =
-            bot.sendMessage(chatId, parseMode = ParseMode.MARKDOWN_V2, text = newString)
+            bot.sendMessage(id, parseMode = ParseMode.MARKDOWN_V2, text = newString)
 
         messageResponse.fold({
             LOGGER.info { "Message Sent Successfully" }
         }, {
             LOGGER.error { "Code: ${messageResponse.first?.code()} Body: ${it.errorBody?.string()}" }
-            sendMessage("Message Failed To Send")
         })
     }
 
@@ -30,9 +30,33 @@ class TelegramService(private val bot: Bot, private val telegramConfig: Telegram
             .replace("-", "\\-")
             .replace("(", "\\(")
             .replace(")", "\\)")
+            .replace("=", "\\=")
     }
 
     companion object {
+        val COMMANDS = """
+            /scores - Get the current scores
+            /final - Get the final scores
+            /proj - Get the projected scores
+            /standings - Get the current standings
+            /matchups - Get the current matchups
+            /waivers - Get today's waivers
+            /monitor - Players in starting lineup that are Questionable, Doubtful, or Out
+            /search - Search for who has a player
+        """.trimIndent()
+
+        val SCHEDULE = """
+            Player Monitor - every sunday 8:00am 
+            Player Monitor - every monday & thursday 6:30pm
+            Waivers - every wednesday 8:00am
+            Standings - every wednesday 8:00am
+            Matchups - every thursday 6:30pm
+            Scores - every friday 8:00am
+            Scores - every sunday 3:00pm & 7:00pm
+            Final Scores - every tuesday 8:00am
+            Projected Scores - every wednesday 8:00am
+        """.trimIndent()
+
         private val LOGGER = KotlinLogging.logger { }
     }
 }
