@@ -8,7 +8,7 @@ import io.ktor.server.netty.Netty
 
 fun main() {
     val botService = BotService()
-    embeddedServer(Netty, port = BotService.config.ktor.port, host = "0.0.0.0") {
+    embeddedServer(Netty, port = BotService.config.ktor.port.toInt(), host = "0.0.0.0") {
         configureMonitoring()
         configureRouting()
         botService.startBot()
