@@ -9,23 +9,17 @@ import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.logging.LogLevel
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
-import mu.KotlinLogging
 import service.YahooClient
 
 class BotService {
 
     companion object {
-        val LOGGER = KotlinLogging.logger { }
+        val config = ConfigLoaderBuilder
+            .default()
+            .addResourceSource("/application.toml").build().loadConfigOrThrow<Config>()
     }
 
-    private val config: Config
     private lateinit var bot: Bot
-
-    init {
-        LOGGER.info { "Loading Config" }
-        config = ConfigLoaderBuilder.default().addResourceSource("/application.toml").build().loadConfigOrThrow()
-        LOGGER.info { config.toString() }
-    }
 
     private val yahoo = YahooApiService(YahooClient())
     private val telegramService by lazy {
@@ -50,14 +44,14 @@ class BotService {
 
     fun startBot() {
         setupBot()
-        scheduleMessages()
         bot.startPolling()
+        scheduleMessages()
     }
 
     private fun scheduleMessages() {
-        commands().filter { it.scheduled }.forEach {
+        commands().filter { it.scheduled }.forEach { message ->
             EventNotificationScheduler(config.telegram.timezone)
-                .scheduleNextExecution({ it.command.invoke(config.telegram.announcementChatId).value }, it.schedules)
+                .scheduleNextExecution(message.command, message.schedules, config.telegram.announcementChatId)
         }
     }
 

@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   coachbot-stage:
-    image: ghcr.io/omarshaarawi/coach-bot:stage
+    image: ghcr.io/omarshaarawi/coach-bot:latest
     container_name: coachbot-stage
     environment:
       - YAHOO_CLIENT_ID=${YAHOO_CLIENT_ID}
@@ -14,10 +14,31 @@ services:
       - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_URL=${DB_URL}
+      - PORT=${PORT}
     expose:
       - 8080
     ports:
       - "8080:8080"
+    restart: unless-stopped
+
+  coachbot:
+    image: ghcr.io/omarshaarawi/coach-bot:latest
+    container_name: coachbot-stage
+    environment:
+      - YAHOO_CLIENT_ID=${YAHOO_CLIENT_ID}
+      - YAHOO_CLIENT_SECRET=${YAHOO_CLIENT_SECRET}
+      - YAHOO_REFRESH_TOKEN=${YAHOO_REFRESH_TOKEN}
+      - YAHOO_LEAGUE_ID=${YAHOO_LEAGUE_ID}
+      - TELEGRAM_ANNOUNCEMENT_CHAT_ID=${TELEGRAM_ANNOUNCEMENT_CHAT_ID}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_URL=${DB_URL}
+      - PORT=${PORT}
+    expose:
+      - 8081
+    ports:
+      - "8081:8081"
     restart: unless-stopped
 
   prometheus:

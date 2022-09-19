@@ -79,7 +79,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:stage
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:latest
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
@@ -91,7 +91,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
 
-      - name: Deploy to Hetzner Cloud
+      - name: Deploy to Hetzner Cloud - Stage
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.REMOTE_DOCKER_HOST }}
@@ -100,5 +100,5 @@ jobs:
           script: |
             cd ~/docker-deployment
             docker compose pull coachbot-stage
-            docker compose up coachbot-stage -d --remove-orphans --env-file .env.stage
+            docker compose --env-file .env.stage up coachbot-stage -d --remove-orphans
             docker image prune

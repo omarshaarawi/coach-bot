@@ -9,5 +9,5 @@
     </root>
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="io.netty" level="INFO"/>
-    <logger name="com.fantasy.football.*" level="INFO"/>
+    <logger name="com.fantasy.football.*" level="ERROR"/>
 </configuration>

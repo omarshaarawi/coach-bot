@@ -21,7 +21,11 @@ class EventNotificationScheduler(private val timezone: String) {
         executor.removeOnCancelPolicy = true
     }
 
-    fun scheduleNextExecution(action: () -> Unit, stringSchedules: List<Pair<String, String>>?) {
+    fun scheduleNextExecution(
+        action: (String) -> Lazy<Unit>,
+        stringSchedules: List<Pair<String, String>>?,
+        chatId: String
+    ) {
         stringSchedules!!.forEach { schedule ->
             try {
                 val parsedSchedule = Schedule.parse(schedule.first)
@@ -29,8 +33,8 @@ class EventNotificationScheduler(private val timezone: String) {
                 val nextExecution = parsedSchedule.next(now).withZoneSameInstant(ZoneId.of("America/Chicago"))
                 executor.schedule({
                     LOGGER.info { "Trigger notification event" }
-                    action.invoke()
-                    scheduleNextExecution(action, listOf(schedule))
+                    action.invoke(chatId).value
+                    scheduleNextExecution(action, listOf(schedule), chatId)
                 }, nextExecution.toEpochSecond() - now.toEpochSecond(), TimeUnit.SECONDS)
                 LOGGER.info { "Schedule ${schedule.second} notification for $nextExecution" }
             } catch (ex: SchedulerException) {
