@@ -2,16 +2,16 @@ package com.fantasy.football.service
 
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.Date
+import kotlin.math.abs
 import kotlinx.coroutines.runBlocking
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
 import models.MatchupResource
 import models.TeamsResource
 import service.YahooClient
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.util.Date
-import kotlin.math.abs
 
 class YahooApiService(private val yahooClient: YahooClient) {
 
@@ -249,12 +249,10 @@ class YahooApiService(private val yahooClient: YahooClient) {
             val team1Roster = rosters.find { it.teamName == team1.name }!!.roster
             val team2Roster = rosters.find { it.teamName == team2.name }!!.roster
             val diffScore = team1.teamPoints!!.total - team2.teamPoints!!.total
-            val diffProj = team1.teamProjectedPoints!!.total - team2.teamProjectedPoints!!.total
             if ((
                     (MIN_CLOSE_SCORE_DIFF < diffScore && !allPlayed(team2Roster)) ||
                         MIN_CLOSE_SCORE <= diffScore && diffScore < MAX_CLOSE_SCORE_DIFF && !allPlayed(team1Roster)
-                    ) &&
-                diffProj < MAX_CLOSE_SCORE_DIFF
+                    )
             ) {
                 score.add(
                     "%s %.2f - %.2f %s".format(
