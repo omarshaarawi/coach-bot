@@ -249,12 +249,10 @@ class YahooApiService(private val yahooClient: YahooClient) {
             val team1Roster = rosters.find { it.teamName == team1.name }!!.roster
             val team2Roster = rosters.find { it.teamName == team2.name }!!.roster
             val diffScore = team1.teamPoints!!.total - team2.teamPoints!!.total
-            val diffProj = team1.teamProjectedPoints!!.total - team2.teamProjectedPoints!!.total
             if ((
                     (MIN_CLOSE_SCORE_DIFF < diffScore && !allPlayed(team2Roster)) ||
                         MIN_CLOSE_SCORE <= diffScore && diffScore < MAX_CLOSE_SCORE_DIFF && !allPlayed(team1Roster)
-                    ) &&
-                diffProj < MAX_CLOSE_SCORE_DIFF
+                    )
             ) {
                 score.add(
                     "%s %.2f - %.2f %s".format(
