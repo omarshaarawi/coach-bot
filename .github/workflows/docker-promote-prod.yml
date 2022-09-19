@@ -1,0 +1,30 @@
+name: CD
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    types:
+      - closed
+
+jobs:
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Hetzner Cloud - Prod
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_DOCKER_HOST }}
+          username: ${{ secrets.REMOTE_DOCKER_USER }}
+          key: ${{ secrets.DOCKER_SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/docker-deployment
+            docker compose pull coachbot
+            docker compose --env-file .env up coachbot -d --remove-orphans 
+            docker image prune
