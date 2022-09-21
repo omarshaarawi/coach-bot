@@ -5,12 +5,17 @@ import com.fantasy.football.plugins.configureRouting
 import com.fantasy.football.service.BotService
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
-fun main() {
+suspend fun main() {
     val botService = BotService()
     embeddedServer(Netty, port = BotService.config.ktor.port.toInt(), host = "0.0.0.0") {
         configureMonitoring()
         configureRouting()
-        botService.startBot()
+        GlobalScope.launch(Dispatchers.IO) {
+            botService.startBot()
+        }
     }.start(wait = true)
 }
