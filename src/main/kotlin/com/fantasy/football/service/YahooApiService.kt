@@ -2,7 +2,12 @@ package com.fantasy.football.service
 
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
 import models.MatchupResource
@@ -16,7 +21,7 @@ import kotlin.math.abs
 class YahooApiService(private val yahooClient: YahooClient) {
 
     private val numberOfTeams: Int?
-    private val currentWeek: Int
+    private var currentWeek: Int
     private var teamNameKeyMap = mutableMapOf<Int, String>()
     private val nflGamesService = NFLGamesService()
 
@@ -31,7 +36,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
         const val MIN_CLOSE_SCORE = 0
         const val FUZZY_SCORE_THRESHOLD = 80
         const val FREE_AGENT_COUNT = 0
-        const val FREE_AGENT_INCREMENT = 9
+        const val FREE_AGENT_INCREMENT = 25
         const val FREE_AGENT_COUNT_MAX = 150
     }
 
@@ -42,6 +47,11 @@ class YahooApiService(private val yahooClient: YahooClient) {
         league.teams?.forEach {
             teamNameKeyMap[it.teamId] = it.name
         }
+    }
+
+    fun updateCurrentWeek() {
+        val league = yahooClient.getLeagueTeams()
+        currentWeek = league?.currentWeek!!
     }
 
     private fun getTrophies(matchups: List<MatchupResource>): String {
@@ -102,12 +112,13 @@ class YahooApiService(private val yahooClient: YahooClient) {
 
         val lowScoreString = "Low score: $lowTeamName with " +
             "${lowScore.roundDecimal(2)} points"
-        val highScoreString = "High score: $highTeamName with " +
+        val highScoreString = "High score: $highTeamName with " + "" +
             "${highScore.roundDecimal(2)} points"
         val closeScoreString = "$closeWinner barely beat $closeLoser by a margin of " +
             closestScore.roundDecimal(2)
         val blowoutString = "$blownOutTeamName blown out by $ownererTeamName by a margin of " +
             biggestBlowout.roundDecimal(2)
+
         return """
                 *Trophies of the week:*
                 
@@ -172,8 +183,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
     fun getTransactions(): String {
         val transactions = mutableListOf<String>()
         val today = LocalDate.now().toString()
-        yahooClient.getTransactions()!!.filter { transaction
-            ->
+        yahooClient.getTransactions()!!.filter { transaction ->
             getDateTime(transaction.timestamp.toString()) == today
         }.forEach { transaction ->
             when (transaction.type) {
@@ -188,9 +198,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                             }
 
                             "drop" -> {
-                                transactions.add(
-                                    "DROPPED ${player.displayPosition} ${player.name.full}\n"
-                                )
+                                transactions.add("DROPPED ${player.displayPosition} ${player.name.full}\n")
                             }
                         }
                     }
@@ -223,7 +231,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
     }
 
     fun getMonitor(ignoreDate: Boolean = false): String {
-        val rosters = getTeamRosters()
+        val rosters = runBlocking { getTeamRosters() }
         val monitor = mutableListOf<String?>()
 
         rosters.forEach { team ->
@@ -255,12 +263,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
                     )
             ) {
                 score.add(
-                    "%s %.2f - %.2f %s".format(
-                        team1.name,
-                        team1.teamPoints!!.total,
-                        team2.teamPoints!!.total,
-                        team2.name
-                    )
+                    "%s %.2f - %.2f %s"
+                        .format(team1.name, team1.teamPoints!!.total, team2.teamPoints!!.total, team2.name)
                 )
             }
         }
@@ -270,52 +274,69 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return score.joinToString(prefix = "*Close Scores*\n\n", separator = "\n\n")
     }
 
-    fun searchPlayer(name: String): String {
-        val teamRosters = getTeamRosters()
+    suspend fun searchPlayer(name: String): String {
+        val teamRosters: List<TeamRosters> = getTeamRosters()
         val freeAgents = getAvailablePlayers()
-        teamRosters.forEach { teamRoster ->
+
+        val message = coroutineScope {
+            val a = async { searchRosters(name, teamRosters) }
+            val b = async { searchFreeAgents(name, freeAgents) }
+            awaitAll(a, b).filterNotNull()
+        }
+
+        if (message.isEmpty()) {
+            return "No players found"
+        }
+        return message.first()
+    }
+
+    private suspend fun searchFreeAgents(name: String, players: List<Player>): String? = coroutineScope {
+        players.forEach { _ ->
+            val match: BoundExtractedResult<Player> = FuzzySearch.extractOne(name, players) { x: Player -> x.name }
+            if (match.score > FUZZY_SCORE_THRESHOLD) {
+                return@coroutineScope "${match.referent.name} is a free agent"
+            }
+        }
+        null
+    }
+
+    private suspend fun searchRosters(name: String, team: List<TeamRosters>): String? = coroutineScope {
+        team.forEach { teamRoster ->
             val roster = teamRoster.roster
             val match: BoundExtractedResult<Player> = FuzzySearch.extractOne(name, roster) { x: Player -> x.name }
             if (match.score > FUZZY_SCORE_THRESHOLD) {
-                return "${match.referent.name} belongs to ${teamRoster.teamName}"
+                return@coroutineScope "${match.referent.name} belongs to ${teamRoster.teamName}"
             }
         }
-        freeAgents.forEach { _ ->
-            val match: BoundExtractedResult<Player> = FuzzySearch.extractOne(name, freeAgents) { x: Player -> x.name }
-            if (match.score > FUZZY_SCORE_THRESHOLD) {
-                return "${match.referent.name} is a free agent"
-            }
-        }
-
-        return "No player found"
+        null
     }
 
-    private fun getAvailablePlayers(): MutableList<Player> {
+    private suspend fun getAvailablePlayers() = coroutineScope {
         val nflGames = runBlocking { nflGamesService.getGames() }
         val listOfPlayers = mutableListOf<Player>()
-        var count = FREE_AGENT_COUNT
-        while (count <= FREE_AGENT_COUNT_MAX) {
-            val freeAgents = yahooClient.getAvailablePlayers(currentWeek, count)
-            freeAgents!!.forEach { player ->
-                val hasPlayed = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.hasPlayed
-                val datePlaying = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.date
-                listOfPlayers.add(
-                    Player(
-                        player.name.full,
-                        "FA",
-                        player.displayPosition!!,
-                        player.status,
-                        player.selectedPosition?.position,
-                        player.editorialTeamFullName!!,
-                        hasPlayed,
-                        datePlaying
+        withContext(Dispatchers.IO) {
+            (FREE_AGENT_COUNT..FREE_AGENT_COUNT_MAX step FREE_AGENT_INCREMENT).map {
+                val freeAgents = yahooClient.getAvailablePlayers(currentWeek, it)
+                freeAgents!!.forEach { player ->
+                    val game = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!
+                    val hasPlayed = game.hasPlayed
+                    val datePlaying = game.date
+                    listOfPlayers.add(
+                        Player(
+                            player.name.full,
+                            "FA",
+                            player.displayPosition!!,
+                            player.status,
+                            player.selectedPosition?.position,
+                            player.editorialTeamFullName!!,
+                            hasPlayed,
+                            datePlaying
+                        )
                     )
-                )
+                }
             }
-            count += FREE_AGENT_INCREMENT
         }
-
-        return listOfPlayers
+        return@coroutineScope listOfPlayers
     }
 
     private fun scanRoster(team: TeamRosters, ignoreDate: Boolean): String? {
@@ -327,19 +348,15 @@ class YahooApiService(private val yahooClient: YahooClient) {
         }
         teamRoster.forEach { player ->
             if (
-                !player.hasPlayed && (player.selectedPosition != "BN" && player.selectedPosition != "IR") &&
+                !player.hasPlayed &&
+                (player.selectedPosition != "BN" && player.selectedPosition != "IR") &&
                 (player.status == "O" || player.status == "D" || player.status == "Q")
             ) {
-                players.add(
-                    "${player.position} ${player.name} - ${player.status}"
-                )
+                players.add("${player.position} ${player.name} - ${player.status}")
             }
         }
         return if (players.isNotEmpty()) {
-            players.joinToString(
-                prefix = "__${team.teamName}__\n",
-                separator = "\n"
-            )
+            players.joinToString(prefix = "__${team.teamName}__\n", separator = "\n")
         } else {
             null
         }
@@ -354,27 +371,29 @@ class YahooApiService(private val yahooClient: YahooClient) {
         return true
     }
 
-    private fun getTeamRosters(): List<TeamRosters> {
+    private suspend fun getTeamRosters(): List<TeamRosters> = coroutineScope {
         val nflGames = runBlocking { nflGamesService.getGames() }
-        return yahooClient.getTeams()!!.map { team ->
-            val listOfPlayers = mutableListOf<Player>()
-            team.roster!!.players.forEach { player ->
-                val hasPlayed = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.hasPlayed
-                val datePlaying = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.date
-                listOfPlayers.add(
-                    Player(
-                        player.name.full,
-                        team.name,
-                        player.displayPosition!!,
-                        player.status,
-                        player.selectedPosition!!.position,
-                        player.editorialTeamFullName!!,
-                        hasPlayed,
-                        datePlaying
+        withContext(Dispatchers.IO) {
+            return@withContext yahooClient.getTeams()!!.map { team ->
+                val listOfPlayers = mutableListOf<Player>()
+                team.roster!!.players.forEach { player ->
+                    val hasPlayed = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.hasPlayed
+                    val datePlaying = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.date
+                    listOfPlayers.add(
+                        Player(
+                            player.name.full,
+                            team.name,
+                            player.displayPosition!!,
+                            player.status,
+                            player.selectedPosition!!.position,
+                            player.editorialTeamFullName!!,
+                            hasPlayed,
+                            datePlaying
+                        )
                     )
-                )
+                }
+                TeamRosters(team.name, listOfPlayers)
             }
-            TeamRosters(team.name, listOfPlayers)
         }
     }
 
@@ -390,13 +409,15 @@ class YahooApiService(private val yahooClient: YahooClient) {
 
     private fun getTeamRecord(standings: TeamsResource): String {
         return "(${standings.teamStandings?.outcomeTotals?.wins}" +
-            "-${standings.teamStandings?.outcomeTotals?.ties}" + "-${standings.teamStandings?.outcomeTotals?.losses})"
+            "-${standings.teamStandings?.outcomeTotals?.ties}" +
+            "-${standings.teamStandings?.outcomeTotals?.losses})"
     }
 
     private fun getTeamRecordsById(standings: List<TeamsResource>?): Map<Int, String> {
         return standings!!.associate {
             it.teamId to "(${it.teamStandings?.outcomeTotals?.wins}" +
-                "-${it.teamStandings?.outcomeTotals?.ties}" + "-${it.teamStandings?.outcomeTotals?.losses})"
+                "-${it.teamStandings?.outcomeTotals?.ties}" +
+                "-${it.teamStandings?.outcomeTotals?.losses})"
         }
     }
 
