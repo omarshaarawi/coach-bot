@@ -9,6 +9,9 @@ import com.github.kotlintelegrambot.dispatcher.command
 import com.github.kotlintelegrambot.logging.LogLevel
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import service.YahooClient
 
 class BotService {
@@ -26,7 +29,7 @@ class BotService {
         TelegramService(bot)
     }
 
-    private fun setupBot() {
+    private suspend fun setupBot() {
         bot = bot {
             token = config.telegram.token
             logLevel = LogLevel.Network.Body
@@ -36,16 +39,19 @@ class BotService {
                 }
                 command("search") {
                     val playerName = args.joinToString().replace(",", "")
-                    telegramService.sendMessage(yahoo.searchPlayer(playerName), update.message!!.chat.id.toString())
+                    GlobalScope.launch(Dispatchers.IO) {
+                        telegramService.sendMessage(yahoo.searchPlayer(playerName), update.message!!.chat.id.toString())
+                    }
                 }
             }
         }
     }
 
-    fun startBot() {
+    suspend fun startBot() {
         setupBot()
         bot.startPolling()
         scheduleMessages()
+        scheduleBotUpdates()
     }
 
     private fun scheduleMessages() {
@@ -53,6 +59,14 @@ class BotService {
             EventNotificationScheduler(config.telegram.timezone)
                 .scheduleNextExecution(message.command, message.schedules, config.telegram.announcementChatId)
         }
+    }
+
+    private fun scheduleBotUpdates() {
+        EventNotificationScheduler(config.telegram.timezone)
+            .scheduleNextExecution(
+            { yahoo.updateCurrentWeek() },
+            Pair("every tue 06:00", "Update Current Week"),
+        )
     }
 
     private fun commands(): List<Message> = listOf(
@@ -71,7 +85,7 @@ class BotService {
             listOf(
                 Pair("every sun 15:00", "Score Update PM"),
                 Pair("every sun 19:00", "Score Update PM Sunday"),
-                Pair("every fri,mon 08:00", "Score Update AM")
+                Pair("every fri,mon 07:30", "Score Update AM")
 
             )
         ),
@@ -79,14 +93,14 @@ class BotService {
             "proj",
             { chatId: String -> lazy { telegramService.sendMessage(yahoo.getScoreBoard(projections = true), chatId) } },
             true,
-            listOf(Pair("every wed 08:00", "Score Projections"))
+            listOf(Pair("every wed 07:30", "Score Projections"))
         ),
 
         Message(
             "final",
             { chatId: String -> lazy { telegramService.sendMessage(yahoo.getScoreBoard(final = true), chatId) } },
             true,
-            listOf(Pair("every tue 08:00", "Final Score"))
+            listOf(Pair("every tue 07:30", "Final Score"))
         ),
         Message(
             "matchups",
@@ -98,13 +112,13 @@ class BotService {
             "standings",
             { chatId: String -> lazy { telegramService.sendMessage(yahoo.getStandings(), chatId) } },
             true,
-            listOf(Pair("every wed 08:00", "Current Standings"))
+            listOf(Pair("every wed 07:30", "Current Standings"))
         ),
         Message(
             "waiver",
             { chatId: String -> lazy { telegramService.sendMessage(yahoo.getTransactions(), chatId) } },
             true,
-            listOf(Pair("every wed 08:00", "Waiver Report"))
+            listOf(Pair("every wed 07:30", "Waiver Report"))
         ),
         Message(
             "monitor",
@@ -113,7 +127,7 @@ class BotService {
             listOf(
                 Pair("every thu 18:30", "Player Monitor"),
                 Pair("every mon 18:30", "Player Monitor"),
-                Pair("every sunday 08:00", "Player Monitor")
+                Pair("every sunday 07:30", "Player Monitor")
             )
         ),
         Message(

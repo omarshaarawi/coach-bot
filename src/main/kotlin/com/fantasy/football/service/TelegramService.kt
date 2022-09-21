@@ -46,15 +46,15 @@ class TelegramService(private val bot: Bot) {
         """.trimIndent()
 
         val SCHEDULE = """
-            Player Monitor - every sunday 8:00am 
+            Player Monitor - every sunday 7:30am 
             Player Monitor - every monday & thursday 6:30pm
-            Waivers - every wednesday 8:00am
-            Standings - every wednesday 8:00am
+            Waivers - every wednesday 7:30am
+            Standings - every wednesday 7:30am
             Matchups - every thursday 6:30pm
-            Scores - every friday 8:00am
+            Scores - every friday 7:30am
             Scores - every sunday 3:00pm & 7:00pm
-            Final Scores - every tuesday 8:00am
-            Projected Scores - every wednesday 8:00am
+            Final Scores - every tuesday 7:30am
+            Projected Scores - every wednesday 7:30am
         """.trimIndent()
 
         private val LOGGER = KotlinLogging.logger { }
