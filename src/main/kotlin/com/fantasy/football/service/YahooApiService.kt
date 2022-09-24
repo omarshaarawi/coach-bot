@@ -2,6 +2,10 @@ package com.fantasy.football.service
 
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.Date
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -13,10 +17,6 @@ import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
 import models.MatchupResource
 import models.TeamsResource
 import service.YahooClient
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.util.Date
-import kotlin.math.abs
 
 class YahooApiService(private val yahooClient: YahooClient) {
 
@@ -192,7 +192,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                         when (player.transactionData?.type) {
                             "add" -> {
                                 transactions.add(
-                                    "__${player.transactionData!!.destinationTeamName}__ \nADDED " +
+                                    "__${player.transactionData?.destinationTeamName}__ \nADDED " +
                                         "${player.displayPosition} ${player.name.full}"
                                 )
                             }
@@ -207,7 +207,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                 "add" -> {
                     transaction.players?.forEach { player ->
                         transactions.add(
-                            "${transaction.transactionData!!.destinationTeamName} \nADDED " +
+                            "${player.transactionData?.destinationTeamName} \nADDED " +
                                 "${player.displayPosition} ${player.name.full}\n"
                         )
                     }
@@ -216,7 +216,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                 "drop" -> {
                     transaction.players?.forEach { player ->
                         transactions.add(
-                            "${player.transactionData!!.sourceTeamName} \nDROPPED " +
+                            "${player.transactionData?.sourceTeamName} \nDROPPED " +
                                 "${player.displayPosition} ${player.name.full}\n"
                         )
                     }
@@ -344,7 +344,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
         val teamRoster = if (ignoreDate) {
             team.roster
         } else {
-            team.roster.filter { !it.hasPlayed }
+            team.roster.filter { !it.hasPlayed }.filter { it.datePlaying == LocalDate.now() }
         }
         teamRoster.forEach { player ->
             if (
@@ -416,8 +416,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
     private fun getTeamRecordsById(standings: List<TeamsResource>?): Map<Int, String> {
         return standings!!.associate {
             it.teamId to "(${it.teamStandings?.outcomeTotals?.wins}" +
-                "-${it.teamStandings?.outcomeTotals?.ties}" +
-                "-${it.teamStandings?.outcomeTotals?.losses})"
+                "-${it.teamStandings?.outcomeTotals?.losses}" +
+                "-${it.teamStandings?.outcomeTotals?.ties})"
         }
     }
 
