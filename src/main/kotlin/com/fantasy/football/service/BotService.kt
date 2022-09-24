@@ -64,9 +64,9 @@ class BotService {
     private fun scheduleBotUpdates() {
         EventNotificationScheduler(config.telegram.timezone)
             .scheduleNextExecution(
-                { yahoo.updateCurrentWeek() },
-                Pair("every tue 06:00", "Update Current Week"),
-            )
+            { yahoo.updateCurrentWeek() },
+            Pair("every tue 06:00", "Update Current Week"),
+        )
     }
 
     private fun commands(): List<Message> = listOf(

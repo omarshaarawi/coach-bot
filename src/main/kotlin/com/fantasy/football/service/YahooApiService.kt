@@ -2,10 +2,6 @@ package com.fantasy.football.service
 
 import com.fantasy.football.models.TeamRosters
 import com.fantasy.football.models.TeamRosters.Player
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.util.Date
-import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -17,6 +13,10 @@ import me.xdrop.fuzzywuzzy.model.BoundExtractedResult
 import models.MatchupResource
 import models.TeamsResource
 import service.YahooClient
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.Date
+import kotlin.math.abs
 
 class YahooApiService(private val yahooClient: YahooClient) {
 
