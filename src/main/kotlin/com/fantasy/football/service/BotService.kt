@@ -121,14 +121,19 @@ class BotService {
             listOf(Pair("every wed 07:30", "Waiver Report"))
         ),
         Message(
-            "monitor",
-            { chatId: String -> lazy { telegramService.sendMessage(yahoo.getMonitor(true), chatId) } },
+            "monitorToday",
+            { chatId: String -> lazy { telegramService.sendMessage(yahoo.getMonitor(false), chatId) } },
             true,
             listOf(
                 Pair("every thu 18:30", "Player Monitor"),
                 Pair("every mon 18:30", "Player Monitor"),
                 Pair("every sunday 07:30", "Player Monitor")
             )
+        ),
+        Message(
+            "monitor",
+            { chatId: String -> lazy { telegramService.sendMessage(yahoo.getMonitor(true), chatId) } },
+            false,
         ),
         Message(
             "closeScore",
