@@ -14,7 +14,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to Hetzner Cloud - Prod
         uses: appleboy/ssh-action@master
