@@ -409,8 +409,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
 
     private fun getTeamRecord(standings: TeamsResource): String {
         return "(${standings.teamStandings?.outcomeTotals?.wins}" +
-            "-${standings.teamStandings?.outcomeTotals?.ties}" +
-            "-${standings.teamStandings?.outcomeTotals?.losses})"
+            "-${standings.teamStandings?.outcomeTotals?.losses}" +
+            "-${standings.teamStandings?.outcomeTotals?.ties})"
     }
 
     private fun getTeamRecordsById(standings: List<TeamsResource>?): Map<Int, String> {
