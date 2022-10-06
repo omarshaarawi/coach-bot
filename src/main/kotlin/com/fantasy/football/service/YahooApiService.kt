@@ -207,7 +207,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                 "add" -> {
                     transaction.players?.forEach { player ->
                         transactions.add(
-                            "${player.transactionData?.destinationTeamName} \nADDED " +
+                            "__${player.transactionData?.destinationTeamName}__ \nADDED " +
                                 "${player.displayPosition} ${player.name.full}\n"
                         )
                     }
@@ -216,7 +216,7 @@ class YahooApiService(private val yahooClient: YahooClient) {
                 "drop" -> {
                     transaction.players?.forEach { player ->
                         transactions.add(
-                            "${player.transactionData?.sourceTeamName} \nDROPPED " +
+                            "__${player.transactionData?.sourceTeamName}__ \nDROPPED " +
                                 "${player.displayPosition} ${player.name.full}\n"
                         )
                     }
