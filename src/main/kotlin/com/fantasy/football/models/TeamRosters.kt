@@ -14,6 +14,6 @@ data class TeamRosters(
         val selectedPosition: String?,
         val team: String,
         val hasPlayed: Boolean,
-        val datePlaying: LocalDate
+        val datePlaying: LocalDate?
     )
 }

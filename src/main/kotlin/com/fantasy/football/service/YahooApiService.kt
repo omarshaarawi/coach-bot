@@ -315,12 +315,10 @@ class YahooApiService(private val yahooClient: YahooClient) {
         val nflGames = runBlocking { nflGamesService.getGames() }
         val listOfPlayers = mutableListOf<Player>()
         withContext(Dispatchers.IO) {
-            (FREE_AGENT_COUNT..FREE_AGENT_COUNT_MAX step FREE_AGENT_INCREMENT).map {
+            (FREE_AGENT_COUNT..FREE_AGENT_COUNT_MAX step FREE_AGENT_INCREMENT).map { it ->
                 val freeAgents = yahooClient.getAvailablePlayers(currentWeek, it)
                 freeAgents!!.forEach { player ->
-                    val game = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!
-                    val hasPlayed = game.hasPlayed
-                    val datePlaying = game.date
+                    val game = nflGames.find { it.teams.contains(player.editorialTeamFullName) }
                     listOfPlayers.add(
                         Player(
                             player.name.full,
@@ -329,8 +327,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
                             player.status,
                             player.selectedPosition?.position,
                             player.editorialTeamFullName!!,
-                            hasPlayed,
-                            datePlaying
+                            game?.hasPlayed ?: false,
+                            game?.date
                         )
                     )
                 }
@@ -377,8 +375,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
             return@withContext yahooClient.getTeams()!!.map { team ->
                 val listOfPlayers = mutableListOf<Player>()
                 team.roster!!.players.forEach { player ->
-                    val hasPlayed = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.hasPlayed
-                    val datePlaying = nflGames.find { it.teams.contains(player.editorialTeamFullName) }!!.date
+                    val playerGame = nflGames.find { it.teams.contains(player.editorialTeamFullName) }
+
                     listOfPlayers.add(
                         Player(
                             player.name.full,
@@ -387,8 +385,8 @@ class YahooApiService(private val yahooClient: YahooClient) {
                             player.status,
                             player.selectedPosition!!.position,
                             player.editorialTeamFullName!!,
-                            hasPlayed,
-                            datePlaying
+                            playerGame?.hasPlayed ?: false,
+                            playerGame?.date,
                         )
                     )
                 }
