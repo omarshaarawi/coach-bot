@@ -4,4 +4,4 @@ orbs:
 workflows:
   checkout-check:
     jobs:
-      - gradle/check
+      - gradle/test
