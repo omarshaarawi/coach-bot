@@ -10,5 +10,5 @@ executors:
 workflows:
   checkout-check:
     jobs:
-      - gradle/test
-        - executor: jvm-executor
+      - gradle/test:
+          executor: jvm-executor
